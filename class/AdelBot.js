@@ -12,8 +12,8 @@ class AdelBot {
         channelId: '724964399051309138',
         roleId: '725981703222460457',
         morningTime: { hour: 8, minute: 55 },
-        afternoonTime: { hour: 18, minute: 0 },
-        reminderTime: 41, // in minutes
+        afternoonTime: { hour: 13, minute: 25 },
+        reminderTime: 5, // in minutes
         url: 'https://adel.adrar-formation.eu/login/index.php',
         sentences: [
             'Hey ! Il est l\'heure de se connecter sur ADEL =)',

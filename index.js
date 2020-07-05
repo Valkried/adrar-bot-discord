@@ -66,7 +66,6 @@ const client = new Discord.Client();
 const firebase = require('firebase/app');
 require('firebase/database');
 const firebaseConfig = {
-    // apiKey: "AIzaSyDNL8qKBFRF3DL_Pgi6tVuUTkRo9stBcSA",
     apiKey: process.env.FIREBASE_API_KEY,
     authDomain: "adel-bot.firebaseapp.com",
     databaseURL: "https://adel-bot.firebaseio.com",
