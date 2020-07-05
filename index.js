@@ -1,6 +1,9 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+// For tests only :
+const process = require('./ProcessEnv.js');
+
 const firebase = require('firebase/app');
 require('firebase/database');
 const firebaseConfig = {
