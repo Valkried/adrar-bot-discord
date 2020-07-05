@@ -63,6 +63,9 @@ function sendMessageEachDay() {
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+// For tests only :
+// const process = require('./ProcessEnv.js');
+
 const firebase = require('firebase/app');
 require('firebase/database');
 const firebaseConfig = {
@@ -79,11 +82,12 @@ firebase.initializeApp(firebaseConfig);
 const AdelBot = require('./class/AdelBot');
 const adelBot = new AdelBot();
 
-const channel = client.channels.cache.get(adelBot.params.channelId);
-
 client.on('ready', () => {
-    channel.send('test');
-    sendMessageEachDay();
+    const channel = client.channels.cache.get(adelBot.params.channelId);
+    channel.send('test').then(msg => {
+        console.log('OK');
+    });
+    // sendMessageEachDay();
 });
 
 /**
@@ -93,6 +97,8 @@ client.on('ready', () => {
  * To find the channel's ID, just mention it in Discord with a backslash in front of the mention.
  */
 function sendMessageEachDay() {
+    const channel = client.channels.cache.get(adelBot.params.channelId);
+
     console.log('****************');
     console.log('Starting program');
     console.log('****************');
