@@ -1,70 +1,5 @@
-/*
-
 const Discord = require('discord.js');
 const client = new Discord.Client();
-
-client.on('ready', msg => {
-    sendMessageEachDay();
-});
-
-/!**
- * From monday to friday, morning and afternoon, a message will be sent each day to all users on a specific channel, to reminds them to log in ADEL.
- * The message will be automatically deleted after 15 minutes.
- * You can change the parameters to match your configuration, and specify the channel, the hours, the url to log in and some sentences as funny reminders.
- * To find the channel's ID, just mention it in Discord with a backslash in front of the mention.
- *!/
-function sendMessageEachDay() {
-    const params = {
-        channelId: '720298334522179700', // test : 724964399051309138 | adrar : 720298334522179700
-        roleId: '720298334522179698', // test : 725981703222460457 | adrar : 720298334522179698
-        morningTime: { hour: 8, minute: 55 },
-        afternoonTime: { hour: 13, minute: 25 },
-        url: 'https://adel.adrar-formation.eu/login/index.php',
-        sentences: [
-            'Hey ! Il est l\'heure de se connecter sur ADEL =)',
-            'Debout là-dedans ! On se connecte à ADEL',
-            'ADEL needs YOU',
-            'Hello... It\'s me...',
-            'Venez vite, j\'ai des cookies !'
-        ]
-    };
-
-    const channel = client.channels.cache.get(params.channelId);
-
-    if (channel !== undefined) {
-        setInterval(() => {
-            const sentence = params.sentences[Math.floor(Math.random() * params.sentences.length)];
-            const date = new Date();
-            const day = date.getDay(),
-                  hour = date.getHours(),
-                  minute = date.getMinutes();
-
-            if (day >= 1 && day <= 5) {
-                if ((hour === params.morningTime.hour && minute === params.morningTime.minute) || (hour === params.afternoonTime.hour && minute === params.afternoonTime.minute)) {
-                    channel.send(`<@&${params.roleId}> ${sentence} <${params.url}>`).then(msg => {
-                        msg.delete({timeout: 300000});
-                    });
-                }
-            }
-        }, 60000);
-    }
-}
-
-*/
-
-
-
-
-
-
-/**
- * Tests
- */
-const Discord = require('discord.js');
-const client = new Discord.Client();
-
-// For tests only :
-// const process = require('./ProcessEnv.js');
 
 const firebase = require('firebase/app');
 require('firebase/database');
@@ -83,11 +18,7 @@ const AdelBot = require('./class/AdelBot');
 const adelBot = new AdelBot();
 
 client.on('ready', () => {
-    const channel = client.channels.cache.get(adelBot.params.channelId);
-    channel.send('test').then(msg => {
-        console.log('OK');
-    });
-    // sendMessageEachDay();
+    sendMessageEachDay();
 });
 
 /**
