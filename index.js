@@ -50,7 +50,6 @@ function sendMessageEachDay() {
     }
 }
 
-client.login('NzI0OTYyNzIzNDAxNTY0MjIx.XvH0xQ.PSRo-DUincURwBJpTi_pxmxGRao');
 */
 
 
