@@ -79,7 +79,10 @@ firebase.initializeApp(firebaseConfig);
 const AdelBot = require('./class/AdelBot');
 const adelBot = new AdelBot();
 
+const channel = client.channels.cache.get(adelBot.params.channelId);
+
 client.on('ready', () => {
+    channel.send('test');
     sendMessageEachDay();
 });
 
@@ -90,8 +93,6 @@ client.on('ready', () => {
  * To find the channel's ID, just mention it in Discord with a backslash in front of the mention.
  */
 function sendMessageEachDay() {
-    const channel = client.channels.cache.get(adelBot.params.channelId);
-
     console.log('****************');
     console.log('Starting program');
     console.log('****************');
@@ -190,7 +191,6 @@ function deleteMessage(msg = undefined) {
     sendMessageEachDay();
 }
 
-// client.login('NzI0OTYyNzIzNDAxNTY0MjIx.XvH0xQ.PSRo-DUincURwBJpTi_pxmxGRao');
 client.login(process.env.BOT_TOKEN);
 
 // url API jours fériés : https://calendrier.api.gouv.fr/jours-feries/metropole.json
