@@ -103,6 +103,7 @@ function sendMessageEachDay() {
 
 /**
  * Add a message to Firebase
+ * @param msg
  */
 function addMessageToDatabase(msg) {
     firebase.database().ref('alert-message').set({
@@ -115,6 +116,7 @@ function addMessageToDatabase(msg) {
 
 /**
  * Deletes a message from Firebase
+ * @param msg
  */
 function deleteMessage(msg = undefined) {
     if (msg !== undefined) {

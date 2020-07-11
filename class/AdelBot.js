@@ -14,7 +14,7 @@ class AdelBot {
         morningTime: { hour: 8, minute: 55 },
         afternoonTime: { hour: 13, minute: 25 },
         reminderTime: 5, // in minutes
-        url: 'https://adel.adrar-formation.eu/login/index.php',
+        url: 'https://adel.adrar-formation.eu/course/view.php?id=464',
         sentences: [
             'Hey ! Il est l\'heure de se connecter sur ADEL =)',
             'Debout là-dedans ! On se connecte à ADEL',
@@ -105,6 +105,7 @@ class AdelBot {
 
     /**
      * Logs an array of string events with date and time value, and adds a separator after that.
+     * @param events
      */
     logEvents(events) {
         events.forEach(event => {
