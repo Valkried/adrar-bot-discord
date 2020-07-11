@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 // For tests only :
-const process = require('./ProcessEnv.js');
+// const process = require('./ProcessEnv.js');
 
 const firebase = require('firebase/app');
 require('firebase/database');
@@ -37,72 +37,70 @@ function sendMessageEachDay() {
     console.log('Starting program');
     console.log('****************');
 
-    adelBot.setTargetDate();
+    adelBot.setTargetDate().then(() => {
+        adelBot.logEvents([
+            'The next alert will start at : ' + adelBot.targetDateStart.toLocaleString(),
+            'The next alert will end at : ' + adelBot.targetDateEnd.toLocaleString()
+        ]);
 
-    adelBot.logEvents([
-        'The next alert will start at : ' + adelBot.targetDateStart.toLocaleString(),
-        'The next alert will end at : ' + adelBot.targetDateEnd.toLocaleString()
-    ]);
+        if (channel !== undefined && ![6, 0].includes(adelBot.targetDateStart.getDay())) {
+            // If the program was rebooted between date start and date end
+            if ((Date.now() >= adelBot.targetDateStart && Date.now() < adelBot.targetDateEnd) && adelBot.programStarted) {
+                // Go to database to check if a message was already sent
+                firebase.database().ref('alert-message').on('value', (data) => {
+                    if (adelBot.programStarted) {
+                        adelBot.programStarted = false;
+                        adelBot.logEvents(['The program has been rebooted.']);
+                        adelBot.alertMessage = data.val();
 
-    if (channel !== undefined && ![6, 0].includes(adelBot.targetDateStart.getDay())) {
-            // Si le programme a été redémarré pendant la date de début et la date de fin
-        if ((Date.now() >= adelBot.targetDateStart && Date.now() < adelBot.targetDateEnd) && adelBot.programStarted) {
-            firebase.database().ref('alert-message').on('value', (data) => {
-                if (adelBot.programStarted) {
-                    adelBot.programStarted = false;
-                    adelBot.logEvents(['The program has been rebooted.']);
-                    adelBot.alertMessage = data.val();
-
-                    if (adelBot.alertMessage.messageSent === true) { // Si le message a été envoyé
-                        adelBot.logEvents(['A message is still there.']);
-                        setTimeout(() => {
-                            channel.messages.fetch(adelBot.alertMessage.messageId).then(msg => {
-                                msg.delete().catch(reason => {
-                                    console.log(reason);
-                                });
-                            });
-                            deleteMessage();
-                        }, adelBot.targetDateEnd - Date.now());
-                    } else { // Si le message n'a pas été envoyé
-                        adelBot.logEvents(['No message has been found.'])
-                        channel.send(adelBot.message).then(msg => {
-                            addMessageToDatabase(msg);
-
-                            adelBot.setTargetDate();
-
+                        // If the message was already sent :
+                        if (adelBot.alertMessage.messageSent === true) {
+                            adelBot.logEvents(['A message is still there.']);
+                            // The message will be deleted at date end
                             setTimeout(() => {
-                                deleteMessage(msg);
+                                channel.messages.fetch(adelBot.alertMessage.messageId).then(msg => {
+                                    msg.delete().catch(reason => {
+                                        console.log(reason);
+                                    });
+                                });
+                                deleteMessage();
                             }, adelBot.targetDateEnd - Date.now());
-                        });
+                        } else {
+                            // If the message wasn't sent
+                            adelBot.logEvents(['No message has been found.']);
+                            // Immediately send the message, and then delete it at date end
+                            channel.send(adelBot.message).then(msg => {
+                                addMessageToDatabase(msg);
+
+                                adelBot.setTargetDate();
+
+                                setTimeout(() => {
+                                    deleteMessage(msg);
+                                }, adelBot.targetDateEnd - Date.now());
+                            });
+                        }
                     }
-                }
-            });
-        } else {
-            adelBot.programStarted = false;
-
-            adelBot.logEvents([
-                'The next alert will be sent in ' + Math.round((new Date(adelBot.targetDateStart - Date.now()).getTime() / 1000)) + ' seconds.'
-            ]);
-
-            setTimeout(() => {
-                channel.send(adelBot.message).then(msg => {
-                    addMessageToDatabase(msg);
-
-                    adelBot.logEvents([
-                        'The message will be deleted in ' + Math.round((new Date(adelBot.targetDateEnd - Date.now()).getTime() / 1000)) + ' seconds.'
-                    ]);
-
-                    setTimeout(() => {
-                        deleteMessage(msg);
-                    }, adelBot.targetDateEnd - Date.now());
                 });
-            }, adelBot.targetDateStart - Date.now());
+            } else {
+                adelBot.programStarted = false;
+
+                // Waiting until date start to send the message, and then delete it at date end
+                setTimeout(() => {
+                    channel.send(adelBot.message).then(msg => {
+                        addMessageToDatabase(msg);
+
+                        setTimeout(() => {
+                            deleteMessage(msg);
+                        }, adelBot.targetDateEnd - Date.now());
+                    });
+                }, adelBot.targetDateStart - Date.now());
+            }
         }
-    }
+    });
 }
 
 /**
- * Add a message to Firebase
+ * Adds a message to Firebase
  * @param msg
  */
 function addMessageToDatabase(msg) {
@@ -134,6 +132,3 @@ function deleteMessage(msg = undefined) {
 }
 
 client.login(process.env.BOT_TOKEN);
-
-// url API jours fériés : https://calendrier.api.gouv.fr/jours-feries/metropole.json
-
