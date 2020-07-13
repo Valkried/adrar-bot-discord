@@ -17,8 +17,8 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 
-const AdelBot = require('./class/AdelBot');
-const adelBot = new AdelBot();
+const PadevwanBot = require('./class/PadevwanBot');
+const padevwanBot = new PadevwanBot();
 
 client.on('ready', () => {
     sendMessageEachDay();
@@ -31,69 +31,81 @@ client.on('ready', () => {
  * To find the channel's ID, just mention it in Discord with a backslash in front of the mention.
  */
 function sendMessageEachDay() {
-    const channel = client.channels.cache.get(adelBot.params.channelId);
+    const channel = client.channels.cache.get(padevwanBot.params.channelId);
 
     console.log('****************');
     console.log('Starting program');
     console.log('****************');
 
-    adelBot.setTargetDate().then(() => {
-        adelBot.logEvents([
-            'The next alert will start at : ' + adelBot.targetDateStart.toLocaleString(),
-            'The next alert will end at : ' + adelBot.targetDateEnd.toLocaleString()
+    padevwanBot.setTargetDate().then(() => {
+        padevwanBot.logEvents([
+            'The next alert will start at : ' + padevwanBot.targetDateStart.toLocaleString(),
+            'The next alert will end at : ' + padevwanBot.targetDateEnd.toLocaleString()
         ]);
 
-        if (channel !== undefined && ![6, 0].includes(adelBot.targetDateStart.getDay())) {
+        if (channel !== undefined && ![6, 0].includes(padevwanBot.targetDateStart.getDay())) {
             // If the program was rebooted between date start and date end
-            if ((Date.now() >= adelBot.targetDateStart && Date.now() < adelBot.targetDateEnd) && adelBot.programStarted) {
+            if ((Date.now() >= padevwanBot.targetDateStart && Date.now() < padevwanBot.targetDateEnd) && padevwanBot.programStarted) {
                 // Go to database to check if a message was already sent
                 firebase.database().ref('alert-message').on('value', (data) => {
-                    if (adelBot.programStarted) {
-                        adelBot.programStarted = false;
-                        adelBot.logEvents(['The program has been rebooted.']);
-                        adelBot.alertMessage = data.val();
+                    if (padevwanBot.programStarted) {
+                        padevwanBot.programStarted = false;
+                        padevwanBot.logEvents(['The program has been rebooted.']);
+                        padevwanBot.alertMessage = data.val();
 
                         // If the message was already sent :
-                        if (adelBot.alertMessage.messageSent === true) {
-                            adelBot.logEvents(['A message is still there.']);
+                        if (padevwanBot.alertMessage.messageSent === true) {
+                            padevwanBot.logEvents([
+                                'A message seems to be there.',
+                                'It will be deleted in ' + Math.round((padevwanBot.targetDateEnd.getTime() - Date.now()) / 1000) + ' seconds.'
+                            ]);
                             // The message will be deleted at date end
                             setTimeout(() => {
-                                channel.messages.fetch(adelBot.alertMessage.messageId).then(msg => {
-                                    msg.delete().catch(reason => {
-                                        console.log(reason);
-                                    });
+                                channel.messages.fetch(padevwanBot.alertMessage.messageId).then(msg => {
+                                    deleteMessage(msg);
+                                }).catch(() => {
+                                    padevwanBot.logEvents(['Nope, the message was already deleted on Discord.']);
+                                }).finally(() => {
+                                    sendMessageEachDay();
                                 });
-                                deleteMessage();
-                            }, adelBot.targetDateEnd - Date.now());
+                            }, padevwanBot.targetDateEnd - Date.now());
                         } else {
                             // If the message wasn't sent
-                            adelBot.logEvents(['No message has been found.']);
+                            padevwanBot.logEvents(['No message has been found.']);
                             // Immediately send the message, and then delete it at date end
-                            channel.send(adelBot.message).then(msg => {
-                                addMessageToDatabase(msg);
+                            channel.send(padevwanBot.message).then(msg => {
+                                addMessageToDatabase(msg).then(() => {
+                                    padevwanBot.logEvents(['The message will be deleted in ' + Math.round((padevwanBot.targetDateEnd.getTime() - Date.now()) / 1000) + ' seconds.']);
 
-                                adelBot.setTargetDate();
+                                    padevwanBot.setTargetDate();
 
-                                setTimeout(() => {
-                                    deleteMessage(msg);
-                                }, adelBot.targetDateEnd - Date.now());
+                                    setTimeout(() => {
+                                        deleteMessage(msg).then(() => {
+                                            sendMessageEachDay();
+                                        });
+                                    }, padevwanBot.targetDateEnd - Date.now());
+                                });
                             });
                         }
                     }
                 });
             } else {
-                adelBot.programStarted = false;
+                padevwanBot.programStarted = false;
 
                 // Waiting until date start to send the message, and then delete it at date end
                 setTimeout(() => {
-                    channel.send(adelBot.message).then(msg => {
-                        addMessageToDatabase(msg);
+                    channel.send(padevwanBot.message).then(msg => {
+                        addMessageToDatabase(msg).then(() => {
+                            padevwanBot.logEvents(['The message will be deleted in ' + Math.round((padevwanBot.targetDateEnd.getTime() - Date.now()) / 1000) + ' seconds.']);
 
-                        setTimeout(() => {
-                            deleteMessage(msg);
-                        }, adelBot.targetDateEnd - Date.now());
+                            setTimeout(() => {
+                                deleteMessage(msg).then(() => {
+                                    sendMessageEachDay();
+                                });
+                            }, padevwanBot.targetDateEnd - Date.now());
+                        });
                     });
-                }, adelBot.targetDateStart - Date.now());
+                }, padevwanBot.targetDateStart - Date.now());
             }
         }
     });
@@ -104,31 +116,34 @@ function sendMessageEachDay() {
  * @param msg
  */
 function addMessageToDatabase(msg) {
-    firebase.database().ref('alert-message').set({
-        messageSent: true,
-        messageId: msg.id
-    }).then(() => {
-        adelBot.logEvents(['Message posted']);
+    return new Promise(resolve => {
+        firebase.database().ref('alert-message').set({
+            messageSent: true,
+            messageId: msg.id
+        }).then(() => {
+            padevwanBot.logEvents(['Message posted.']);
+            resolve();
+        });
     });
 }
 
 /**
- * Deletes a message from Firebase
+ * Deletes a message from Discord and then, notifies Firebase
  * @param msg
  */
-function deleteMessage(msg = undefined) {
-    if (msg !== undefined) {
-        msg.delete();
-    }
+function deleteMessage(msg) {
+    return new Promise(resolve => {
+        msg.delete().then(() => {
+            firebase.database().ref('alert-message').set({
+                messageSent: false,
+                messageId: ''
+            }).then(() => {
+                padevwanBot.logEvents(['Message deleted.']);
+                resolve();
+            });
+        });
 
-    firebase.database().ref('alert-message').set({
-        messageSent: false,
-        messageId: ''
-    }).then(() => {
-        adelBot.logEvents(['Message deleted']);
     });
-
-    sendMessageEachDay();
 }
 
 client.login(process.env.BOT_TOKEN);

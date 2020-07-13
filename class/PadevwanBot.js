@@ -1,4 +1,4 @@
-class AdelBot {
+class PadevwanBot {
 
     constructor() {
         this.chooseNewSentence();
@@ -161,7 +161,7 @@ class AdelBot {
      */
     chooseNewSentence() {
         let sentence = this.params.sentences[Math.floor(Math.random() * this.params.sentences.length)];
-        this.message = `<@&${this.params.roleId}> ${sentence.text} - *${sentence.from}* | <${this.params.url}>`;
+        this.message = `<@&${this.params.roleId}> “${sentence.text}” - *${sentence.from}* | <${this.params.url}>`;
     }
 
     /**
@@ -192,4 +192,4 @@ class AdelBot {
     }
 }
 
-module.exports = AdelBot;
+module.exports = PadevwanBot;
