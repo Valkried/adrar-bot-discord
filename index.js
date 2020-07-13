@@ -92,6 +92,8 @@ function sendMessageEachDay() {
             } else {
                 padevwanBot.programStarted = false;
 
+                padevwanBot.logEvents(['The message will be sent in ' + Math.round((padevwanBot.targetDateStart.getTime() - Date.now()) / 1000) + ' seconds.']);
+
                 // Waiting until date start to send the message, and then delete it at date end
                 setTimeout(() => {
                     channel.send(padevwanBot.message).then(msg => {

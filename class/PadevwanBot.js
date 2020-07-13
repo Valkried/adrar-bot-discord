@@ -161,7 +161,7 @@ class PadevwanBot {
      */
     chooseNewSentence() {
         let sentence = this.params.sentences[Math.floor(Math.random() * this.params.sentences.length)];
-        this.message = `<@&${this.params.roleId}> “${sentence.text}” - *${sentence.from}* | <${this.params.url}>`;
+        this.message = `RAPPEL ADEL <@&${this.params.roleId}> ! “${sentence.text}” - *${sentence.from}* | <${this.params.url}>`;
     }
 
     /**
