@@ -1,11 +1,11 @@
 class PadevwanBot {
     params = {
         /* Prod params : */
-        // channelId: '720298334522179700',
-        // roleId: '720298334522179698',
+        channelId: '720298334522179700',
+        roleId: '720298334522179698',
         /* Test params : */
-        channelId: '724964399051309138',
-        roleId: '725981703222460457',
+        // channelId: '724964399051309138',
+        // roleId: '725981703222460457',
         morningTime: { hour: 8, minute: 50 },
         afternoonTime: { hour: 13, minute: 20 },
         reminderTime: 10, // in minutes
