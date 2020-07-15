@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 // For tests only :
-// const process = require('./ProcessEnv.js');
+const process = require('./ProcessEnv.js');
 
 const firebase = require('firebase/app');
 require('firebase/database');
@@ -36,6 +36,8 @@ function sendMessageEachDay() {
     console.log('****************');
     console.log('Starting program');
     console.log('****************');
+
+    padevwanBot.chooseNewSentence();
 
     padevwanBot.setTargetDate().then(() => {
         padevwanBot.logEvents([
