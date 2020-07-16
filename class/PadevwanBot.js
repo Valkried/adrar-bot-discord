@@ -75,66 +75,65 @@ class PadevwanBot {
      */
     setTargetDate() {
         return new Promise(resolve => {
-            let actualDate = new Date();
-            /* Tests : */
-            // let actualDate = new Date('2020-07-23 10:00:00'); // Set a custom date
+            this.getPublicHolidays('https://calendrier.api.gouv.fr/jours-feries/metropole.json').then((publicHolidaysJson) => {
+                let actualDate = new Date();
+                /* Tests : */
+                actualDate = new Date('2020-07-17 14:00:00'); // Set a custom date
 
-            this.targetDateStart = new Date(actualDate);
+                let morningDate = { start: new Date(actualDate) };
+                morningDate.start.setHours(this.params.morningTime.hour);
+                morningDate.start.setMinutes(this.params.morningTime.minute);
+                morningDate.start.setSeconds(0);
+                morningDate.end = new Date(morningDate.start);
+                morningDate.end.setMinutes(morningDate.start.getMinutes() + this.params.reminderTime);
 
-            // Morning time this day
-            this.targetDateStart.setHours(this.params.morningTime.hour);
-            this.targetDateStart.setMinutes(this.params.morningTime.minute);
-            this.targetDateStart.setSeconds(0);
+                let afternoonDate = { start: new Date(actualDate) };
+                afternoonDate.start.setHours(this.params.afternoonTime.hour);
+                afternoonDate.start.setMinutes(this.params.afternoonTime.minute);
+                afternoonDate.start.setSeconds(0);
+                afternoonDate.end = new Date(afternoonDate.start);
+                afternoonDate.end.setMinutes(afternoonDate.start.getMinutes() + this.params.reminderTime);
 
-            this.setTargetDateEnd();
+                let isPublicHolidays = false;
 
-            // If the actual time is > morning time
-            if (actualDate >= this.targetDateEnd || [6, 0].includes(actualDate.getDay())) {
+                // Check if the alert must be set on the morning or on the afternoon
+                if (actualDate < morningDate.end || actualDate >= afternoonDate.end || [6, 0].includes(actualDate.getDay())) {
+                    this.targetDateStart = morningDate.start;
+                } else {
+                    this.targetDateStart = afternoonDate.start;
+                }
 
-                // Afternoon time this day
-                this.targetDateStart.setHours(this.params.afternoonTime.hour);
-                this.targetDateStart.setMinutes(this.params.afternoonTime.minute);
-
-                this.setTargetDateEnd();
-
-                // If the actual time is > afternoon time this day, or if it is saturday or sunday
-                if (actualDate >= this.targetDateEnd || [6, 0].includes(actualDate.getDay())) {
-                    this.targetDateStart.setHours(this.params.morningTime.hour);
-                    this.targetDateStart.setMinutes(this.params.morningTime.minute);
-
-                    if (actualDate.getDay() === 5) { // Friday
+                do {
+                    if (actualDate >= afternoonDate.end && actualDate.getDay() === 5) {
+                        // If it is friday afternoon, go to monday
+                        console.log(1);
                         this.targetDateStart.setHours(this.targetDateStart.getHours() + 72);
-                    } else if (actualDate.getDay() > 0 && actualDate.getDay() < 5) { // Monday to thursday
+                    } else if (actualDate >= afternoonDate.end && [1, 2, 3, 4].includes(this.targetDateStart.getDay()) || this.targetDateStart.getDay() === 0) {
+                        // If it is the afternoon or sunday, go to next day
+                        console.log(2);
                         this.targetDateStart.setHours(this.targetDateStart.getHours() + 24);
+                    } else if (this.targetDateStart.getDay() === 6) {
+                        // If it is saturday, go to monday
+                        console.log(3);
+                        this.targetDateStart.setHours(this.targetDateStart.getHours() + 48);
                     }
 
-                    this.setTargetDateEnd();
-                }
-            }
+                    let targetDateString = this.targetDateStart.toISOString().substr(0,10);
+                    let publicHolidaysDates = JSON.parse(publicHolidaysJson);
 
-            // Checking if target date is on public holiday
-            this.getPublicHolidays('https://calendrier.api.gouv.fr/jours-feries/metropole.json').then((response) => {
-                let targetDateString = this.targetDateStart.toISOString().substr(0,10);
-                let publicHolidaysDates = JSON.parse(response);
-
-                for (let publicHolidaysDate in publicHolidaysDates) {
-                    if (publicHolidaysDates.hasOwnProperty(publicHolidaysDate)) {
-                        if (publicHolidaysDate === targetDateString) {
-                            this.targetDateStart.setHours(this.targetDateStart.getHours() + 24);
-                            this.setTargetDateEnd();
-                            break;
+                    // If it is on public holidays, go to next day
+                    for (let publicHolidaysDate in publicHolidaysDates) {
+                        if (publicHolidaysDates.hasOwnProperty(publicHolidaysDate)) {
+                            if (publicHolidaysDate === targetDateString) {
+                                this.targetDateStart.setHours(this.targetDateStart.getHours() + 24);
+                                isPublicHolidays = true;
+                                break;
+                            } else {
+                                isPublicHolidays = false;
+                            }
                         }
                     }
-                }
-
-                // If it is saturday : + 2 days | If it is sunday : + 1 day
-                switch (this.targetDateStart.getDay()) {
-                    case 6: // Saturday
-                        this.targetDateStart.setHours(this.targetDateStart.getHours() + 48);
-                        break;
-                    case 0: // Sunday
-                        this.targetDateStart.setHours(this.targetDateStart.getHours() + 24);
-                }
+                } while ([6, 0].includes(this.targetDateStart.getDay()) || isPublicHolidays);
 
                 this.setTargetDateEnd();
 

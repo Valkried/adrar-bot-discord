@@ -45,6 +45,8 @@ function sendMessageEachDay() {
             'The next alert will end at : ' + padevwanBot.targetDateEnd.toLocaleString()
         ]);
 
+        return;
+
         if (channel !== undefined && ![6, 0].includes(padevwanBot.targetDateStart.getDay())) {
             // If the program was rebooted between date start and date end
             if ((Date.now() >= padevwanBot.targetDateStart && Date.now() < padevwanBot.targetDateEnd) && padevwanBot.programStarted) {
