@@ -76,7 +76,7 @@ class PadevwanBot {
      */
     setTargetDate() {
         return new Promise(resolve => {
-            this.getPublicHolidays(this.params.publicHolidaysApi).then((publicHolidaysJson) => {
+            this.getPublicHolidays().then((publicHolidaysJson) => {
                 let actualDate = new Date();
                 /* Tests : */
                 // actualDate = new Date('2020-07-26 14:25:00'); // Set a custom date
@@ -162,15 +162,14 @@ class PadevwanBot {
 
     /**
      * Gets a list of public holidays dates.
-     * @param url
      * @returns {Promise<unknown>}
      */
-    getPublicHolidays(url) {
+    getPublicHolidays() {
         const XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
 
         return new Promise((resolve) => {
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', url);
+            xhr.open('GET', this.params.publicHolidaysApi);
             xhr.onload = () => resolve(xhr.responseText);
             xhr.send();
         });
