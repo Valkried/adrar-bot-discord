@@ -10,6 +10,7 @@ class PadevwanBot {
         afternoonTime: { hour: 13, minute: 20 },
         reminderTime: 10, // in minutes
         url: 'https://adel.adrar-formation.eu/course/view.php?id=464',
+        publicHolidaysApi: 'https://calendrier.api.gouv.fr/jours-feries/metropole.json',
         sentences: [
             { text: 'Bazinga', from: 'The Big bang Theory' },
             { text: 'Friends don\'t lie', from: 'Stranger Things' },
@@ -75,24 +76,13 @@ class PadevwanBot {
      */
     setTargetDate() {
         return new Promise(resolve => {
-            this.getPublicHolidays('https://calendrier.api.gouv.fr/jours-feries/metropole.json').then((publicHolidaysJson) => {
+            this.getPublicHolidays(this.params.publicHolidaysApi).then((publicHolidaysJson) => {
                 let actualDate = new Date();
                 /* Tests : */
-                actualDate = new Date('2020-07-17 14:00:00'); // Set a custom date
+                // actualDate = new Date('2020-07-26 14:25:00'); // Set a custom date
 
-                let morningDate = { start: new Date(actualDate) };
-                morningDate.start.setHours(this.params.morningTime.hour);
-                morningDate.start.setMinutes(this.params.morningTime.minute);
-                morningDate.start.setSeconds(0);
-                morningDate.end = new Date(morningDate.start);
-                morningDate.end.setMinutes(morningDate.start.getMinutes() + this.params.reminderTime);
-
-                let afternoonDate = { start: new Date(actualDate) };
-                afternoonDate.start.setHours(this.params.afternoonTime.hour);
-                afternoonDate.start.setMinutes(this.params.afternoonTime.minute);
-                afternoonDate.start.setSeconds(0);
-                afternoonDate.end = new Date(afternoonDate.start);
-                afternoonDate.end.setMinutes(afternoonDate.start.getMinutes() + this.params.reminderTime);
+                let morningDate = this.createMorningAndAfternoonDate(actualDate, this.params.morningTime);
+                let afternoonDate = this.createMorningAndAfternoonDate(actualDate, this.params.afternoonTime);
 
                 let isPublicHolidays = false;
 
@@ -104,17 +94,18 @@ class PadevwanBot {
                 }
 
                 do {
+                    let isSameDay = actualDate.getDate() === this.targetDateStart.getDate() && actualDate.getMonth() === this.targetDateStart.getMonth();
+
+                    // If it is friday afternoon, go to monday
                     if (actualDate >= afternoonDate.end && actualDate.getDay() === 5) {
-                        // If it is friday afternoon, go to monday
-                        console.log(1);
                         this.targetDateStart.setHours(this.targetDateStart.getHours() + 72);
-                    } else if (actualDate >= afternoonDate.end && [1, 2, 3, 4].includes(this.targetDateStart.getDay()) || this.targetDateStart.getDay() === 0) {
-                        // If it is the afternoon or sunday, go to next day
-                        console.log(2);
+
+                    // If it is the afternoon or sunday, go to next day
+                    } else if (isSameDay && actualDate >= afternoonDate.end && [1, 2, 3, 4].includes(this.targetDateStart.getDay()) || this.targetDateStart.getDay() === 0) {
                         this.targetDateStart.setHours(this.targetDateStart.getHours() + 24);
+
+                    // If it is saturday, go to monday
                     } else if (this.targetDateStart.getDay() === 6) {
-                        // If it is saturday, go to monday
-                        console.log(3);
                         this.targetDateStart.setHours(this.targetDateStart.getHours() + 48);
                     }
 
@@ -183,6 +174,23 @@ class PadevwanBot {
             xhr.onload = () => resolve(xhr.responseText);
             xhr.send();
         });
+    }
+
+    /**
+     * Creates a date for the morning and afternoon alert, based on the actual date
+     * @param actualDate
+     * @param time
+     * @returns {{start: Date}}
+     */
+    createMorningAndAfternoonDate(actualDate, time) {
+        let alertDate = { start: new Date(actualDate) };
+        alertDate.start.setHours(time.hour);
+        alertDate.start.setMinutes(time.minute);
+        alertDate.start.setSeconds(0);
+        alertDate.end = new Date(alertDate.start);
+        alertDate.end.setMinutes(alertDate.start.getMinutes() + this.params.reminderTime);
+
+        return alertDate;
     }
 }
 
