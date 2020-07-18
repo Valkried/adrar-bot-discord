@@ -79,15 +79,16 @@ class PadevwanBot {
             this.getPublicHolidays().then((publicHolidaysJson) => {
                 let actualDate = new Date();
                 /* Tests : */
-                // actualDate = new Date('2020-07-26 14:25:00'); // Set a custom date
+                // actualDate = new Date('2020-07-23 12:25:00'); // Set a custom date
 
                 let morningDate = this.createMorningAndAfternoonDate(actualDate, this.params.morningTime);
                 let afternoonDate = this.createMorningAndAfternoonDate(actualDate, this.params.afternoonTime);
 
-                let isPublicHolidays = false;
+                let publicHolidaysDates = JSON.parse(publicHolidaysJson);
+                let isPublicHolidays = this.checkPublicHolidays(actualDate, publicHolidaysDates);
 
                 // Check if the alert must be set on the morning or on the afternoon
-                if (actualDate < morningDate.end || actualDate >= afternoonDate.end || [6, 0].includes(actualDate.getDay())) {
+                if (actualDate < morningDate.end || actualDate >= afternoonDate.end || [6, 0].includes(actualDate.getDay()) || isPublicHolidays) {
                     this.targetDateStart = morningDate.start;
                 } else {
                     this.targetDateStart = afternoonDate.start;
@@ -109,20 +110,11 @@ class PadevwanBot {
                         this.targetDateStart.setHours(this.targetDateStart.getHours() + 48);
                     }
 
-                    let targetDateString = this.targetDateStart.toISOString().substr(0,10);
-                    let publicHolidaysDates = JSON.parse(publicHolidaysJson);
+                    isPublicHolidays = this.checkPublicHolidays(this.targetDateStart, publicHolidaysDates);
 
                     // If it is on public holidays, go to next day
-                    for (let publicHolidaysDate in publicHolidaysDates) {
-                        if (publicHolidaysDates.hasOwnProperty(publicHolidaysDate)) {
-                            if (publicHolidaysDate === targetDateString) {
-                                this.targetDateStart.setHours(this.targetDateStart.getHours() + 24);
-                                isPublicHolidays = true;
-                                break;
-                            } else {
-                                isPublicHolidays = false;
-                            }
-                        }
+                    if (isPublicHolidays) {
+                        this.targetDateStart.setHours(this.targetDateStart.getHours() + 24);
                     }
                 } while ([6, 0].includes(this.targetDateStart.getDay()) || isPublicHolidays);
 
@@ -150,7 +142,7 @@ class PadevwanBot {
     }
 
     /**
-     * Logs an array of string events with date and time value, and adds a separator after that.
+     * Logs an array of string events, and adds a separator after that.
      * @param events
      */
     logEvents(events) {
@@ -162,7 +154,7 @@ class PadevwanBot {
 
     /**
      * Gets a list of public holidays dates.
-     * @returns {Promise<unknown>}
+     * @returns {Promise<String>}
      */
     getPublicHolidays() {
         const XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
@@ -173,6 +165,31 @@ class PadevwanBot {
             xhr.onload = () => resolve(xhr.responseText);
             xhr.send();
         });
+    }
+
+    /**
+     * Checks if the target date is on public holidays
+     * @param targetDate
+     * @param publicHolidaysDates
+     * @returns {boolean}
+     */
+    checkPublicHolidays(targetDate, publicHolidaysDates) {
+        let isPublicHolidays;
+
+        targetDate = targetDate.toISOString().substr(0,10);
+
+        for (let publicHolidaysDate in publicHolidaysDates) {
+            if (publicHolidaysDates.hasOwnProperty(publicHolidaysDate)) {
+                if (publicHolidaysDate === targetDate) {
+                    isPublicHolidays = true;
+                    break;
+                } else {
+                    isPublicHolidays = false;
+                }
+            }
+        }
+
+        return isPublicHolidays;
     }
 
     /**
