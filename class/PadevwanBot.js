@@ -11,7 +11,7 @@ class PadevwanBot {
         reminderTime: 10, // in minutes
         holidaysAndInternship: {
             summer: {
-                start: new Date('2020-07-03 00:00:00'),
+                start: new Date('2020-08-03 00:00:00'),
                 end: new Date('2020-08-14 23:59:59')
             },
             winter: {
