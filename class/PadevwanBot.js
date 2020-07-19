@@ -1,17 +1,13 @@
 class PadevwanBot {
     params = {
-        /* Prod params : */
         channelId: '720298334522179700',
         roleId: '720298334522179698',
-        /* Test params : */
-        // channelId: '724964399051309138',
-        // roleId: '725981703222460457',
         morningTime: { hour: 8, minute: 50 },
         afternoonTime: { hour: 13, minute: 20 },
         reminderTime: 10, // in minutes
         holidaysAndInternship: {
             summer: {
-                start: new Date('2020-07-03 00:00:00'),
+                start: new Date('2020-08-03 00:00:00'),
                 end: new Date('2020-08-14 23:59:59')
             },
             winter: {
