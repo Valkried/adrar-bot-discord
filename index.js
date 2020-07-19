@@ -112,6 +112,8 @@ function sendMessageEachDay() {
                 }, padevwanBot.targetDateStart - Date.now());
             }
         }
+    }).catch(() => {
+        sendMessageEachDay();
     });
 }
 
